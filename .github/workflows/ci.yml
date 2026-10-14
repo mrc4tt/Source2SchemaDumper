@@ -31,8 +31,8 @@ jobs:
             sdks: '["cs2", "dota", "deadlock"]'
           - os: ubuntu-latest
             os_short: linux
-            compiler_cc: clang
-            compiler_cxx: clang++
+            compiler_cc: gcc-14
+            compiler_cxx: g++-14
             sdks: '["cs2", "dota"]'
             container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk
       fail-fast: false
@@ -101,7 +101,7 @@ jobs:
         run: |
           cd ambuild && python setup.py install && cd ..
 
-      - name: Install Clang
+      - name: Setup CC & CXX compiler
         if: matrix.os == 'ubuntu-latest'
         run: |
           echo "CC=${{ matrix.compiler_cc }}" >> $GITHUB_ENV
