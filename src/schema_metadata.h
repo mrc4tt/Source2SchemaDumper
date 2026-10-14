@@ -2,7 +2,7 @@
 
 #include "plugin.h"
 #include "schemareader.h"
-#include "schemasystem/schematypes.h"
+#include "schemalib/schemametadata_data.h"
 
 #include <string>
 #include <sstream>

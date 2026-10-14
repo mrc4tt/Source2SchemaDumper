@@ -2,6 +2,8 @@
 #include "schema_metadata.h"
 #include "pulse_metadata.h"
 
+#include "splitstring.h"
+
 #include "plugin.h"
 
 #include <fstream>

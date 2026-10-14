@@ -1,7 +1,7 @@
 #pragma once
 
+#include "schemalib/schematype.h"
 #include "schemasystem/schemasystem.h"
-#include "schemasystem/schematypes.h"
 
 #include "keyvalues3.h"
 
