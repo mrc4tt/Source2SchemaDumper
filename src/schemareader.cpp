@@ -408,28 +408,28 @@ int SchemaReader::ReadDeclClass( CSchemaType_DeclaredClass *type )
 	{
 		// Ugly hack to prevent stringifying corrupted kv3 getter in that class,
 		// otherwise it'll crash when attempted to be retrieved
-		if(std::strcmp( ci->m_pszName, "CastSphereSATParams_t" ) != 0 &&
-			std::strcmp( ci->m_pszName, "fogplayerparams_t" ) != 0 &&
+		if(std::strcmp( ci->m_pName, "CastSphereSATParams_t" ) != 0 &&
+			std::strcmp( ci->m_pName, "fogplayerparams_t" ) != 0 &&
 			// This one outputs corrupted string symbols (mostly just pure data bytes of something)
 			// which will trip json parsers later
-			std::strcmp( ci->m_pszName, "modifiedconvars_t" ) != 0)
-			ReadMetaTags( traits, ci->m_pStaticMetadata, ci->m_nStaticMetadataCount );
+			std::strcmp( ci->m_pName, "modifiedconvars_t" ) != 0)
+			ReadMetaTags( traits, ci->m_pMetadata, ci->m_nNumMetadata );
 
-		if(ci->m_nBaseClassCount > 0)
+		if(ci->m_nNumBaseClasses > 0)
 		{
 			traits->SetMemberUShort( "multi_depth", ci->m_nMultipleInheritanceDepth );
 			traits->SetMemberUShort( "single_depth", ci->m_nSingleInheritanceDepth );
 
 			auto baseclasses = traits->FindOrCreateMember( "baseclasses" );
-			baseclasses->SetArrayElementCount( ci->m_nBaseClassCount );
+			baseclasses->SetArrayElementCount( ci->m_nNumBaseClasses );
 
-			for(int i = 0; i < ci->m_nBaseClassCount; i++)
+			for(int i = 0; i < ci->m_nNumBaseClasses; i++)
 			{
 				auto &base_ci = ci->m_pBaseClasses[i];
 				auto baseclass = baseclasses->GetArrayElement( i );
 
 				baseclass->SetMemberUInt( "offset", base_ci.m_nOffset );
-				baseclass->SetMemberInt( "ref_idx", ReadDeclClass( base_ci.m_pClass->m_pDeclaredClass ) );
+				baseclass->SetMemberInt( "ref_idx", ReadDeclClass( base_ci.m_pClass->m_pTypeOf ) );
 			}
 		}
 	}
@@ -440,18 +440,18 @@ int SchemaReader::ReadDeclClass( CSchemaType_DeclaredClass *type )
 
 	if(ci)
 	{
-		members->SetArrayElementCount( ci->m_nFieldCount );
+		members->SetArrayElementCount( ci->m_nNumFields );
 
-		for(int i = 0; i < ci->m_nFieldCount; i++)
+		for(int i = 0; i < ci->m_nNumFields; i++)
 		{
 			auto field = ci->m_pFields[i];
 			auto member = members->GetArrayElement( i );
 
-			member->SetMemberString( "name", field.m_pszName );
+			member->SetMemberString( "name", field.m_pName );
 			member->SetMemberInt( "offset", field.m_nSingleInheritanceOffset );
 			auto member_traits = member->FindOrCreateMember( "traits" );
 
-			ReadMetaTags( member_traits, field.m_pStaticMetadata, field.m_nStaticMetadataCount );
+			ReadMetaTags( member_traits, field.m_pMetadata, field.m_nNumMetadata );
 			ReadMemberSchemaType( member_traits, field.m_pType );
 		}
 	}
@@ -478,19 +478,19 @@ int SchemaReader::ReadDeclEnum( CSchemaType_DeclaredEnum *type )
 
 	if(ci)
 	{
-		ReadMetaTags( traits, ci->m_pStaticMetadata, ci->m_nStaticMetadataCount );
+		ReadMetaTags( traits, ci->m_pMetadata, ci->m_nNumMetadata );
 
 		auto fields = traits->FindOrCreateMember( "fields" );
-		fields->SetArrayElementCount( ci->m_nEnumeratorCount );
-		for(int i = 0; i < ci->m_nEnumeratorCount; i++)
+		fields->SetArrayElementCount( ci->m_nNumEnumerators );
+		for(int i = 0; i < ci->m_nNumEnumerators; i++)
 		{
 			auto enumf = ci->m_pEnumerators[i];
 			auto field = fields->GetArrayElement( i );
 
-			field->SetMemberString( "name", enumf.m_pszName );
+			field->SetMemberString( "name", enumf.m_pName );
 			field->SetMemberInt64( "value", enumf.m_nValue );
 
-			ReadMetaTags( field, enumf.m_pStaticMetadata, enumf.m_nStaticMetadataCount, true );
+			ReadMetaTags( field, enumf.m_pMetadata, enumf.m_nNumMetadata, true );
 		}
 	}
 	else
@@ -527,7 +527,7 @@ void SchemaReader::ReadMetaTags( KeyValues3 *root, SchemaMetadataEntryData_t *da
 		auto meta = data[i];
 		auto metatag = metatags->GetArrayElement( i );
 
-		metatag->SetMemberString( "name", meta.m_pszName );
+		metatag->SetMemberString( "name", meta.m_pName );
 
 		std::string metavalue = SchemaMetadataToString::Eval( &meta );
 		if(!metavalue.empty())
@@ -542,7 +542,7 @@ void SchemaReader::ReadFlags( KeyValues3 *root, CSchemaType *type )
 		if(!class_decl->m_pClassInfo)
 			return;
 
-		auto class_flags = class_decl->m_pClassInfo->m_nFlags1;
+		auto class_flags = class_decl->m_pClassInfo->m_nClassFlags1;
 
 		if(class_flags == 0)
 			return;
@@ -554,7 +554,7 @@ void SchemaReader::ReadFlags( KeyValues3 *root, CSchemaType *type )
 			{ SCHEMA_CF1_HAS_TRIVIAL_CONSTRUCTOR, "has_trivial_constructor" },
 			{ SCHEMA_CF1_HAS_TRIVIAL_DESTRUCTOR, "has_trivial_destructor" },
 			{ SCHEMA_CF1_LIMITED_METADATA, "limited_metadata" },
-			{ SCHEMA_CF1_INHERITANCE_DEPTH_CALCULATED, "inheritance_depth_calculated" },
+			{ SCHEMA_CF1_INFO_IS_INITIALIZED, "inheritance_depth_calculated" },
 			{ SCHEMA_CF1_MODULE_LOCAL_TYPE_SCOPE, "local_type_scope" },
 			{ SCHEMA_CF1_GLOBAL_TYPE_SCOPE, "global_type_scope" },
 			{ SCHEMA_CF1_CONSTRUCT_ALLOWED, "construct_allowed" },
@@ -599,19 +599,19 @@ void SchemaReader::ReadFlags( KeyValues3 *root, CSchemaType *type )
 		if(!enum_decl->m_pEnumInfo)
 			return;
 
-		auto enum_flags = enum_decl->m_pEnumInfo->m_nFlags;
+		auto enum_flags = enum_decl->m_pEnumInfo->m_nEnumFlags1;
 
 		if(enum_flags == 0)
 			return;
 
 		auto flags = root->FindOrCreateMember( "flags" );
 		static std::pair<uint32, const char *> s_FlagMap[] = {
-			{ SCHEMA_EF_IS_REGISTERED, "is_registered" },
-			{ SCHEMA_EF_MODULE_LOCAL_TYPE_SCOPE, "local_type_scope" },
-			{ SCHEMA_EF_GLOBAL_TYPE_SCOPE, "global_type_scope" },
-			{ SCHEMA_EF_UNK003, "unk003" },
-			{ SCHEMA_EF_UNK004, "unk004" },
-			{ SCHEMA_EF_UNK005, "unk005" }
+			{ SCHEMA_EF1_INFO_IS_INITIALIZED, "is_registered" },
+			{ SCHEMA_EF1_MODULE_LOCAL_TYPE_SCOPE, "local_type_scope" },
+			{ SCHEMA_EF1_GLOBAL_TYPE_SCOPE, "global_type_scope" },
+			{ SCHEMA_EF1_UNSIGNED_STORAGE_TYPE, "unk003" },
+			{ SCHEMA_EF1_IS_FLAGS_ENUM, "unk004" },
+			{ SCHEMA_EF1_IS_SCOPED_ENUM, "unk005" }
 		};
 
 		for(int i = 0; i < ARRAYSIZE( s_FlagMap ); i++)
@@ -650,7 +650,7 @@ inline void SchemaReader::ReadPulseDomains( KeyValues3 *root, std::map<std::stri
 	{
 		auto ci = classes[i];
 
-		if(auto metatag = SchemaMetadataIterator( ci->m_pStaticMetadata, ci->m_nStaticMetadataCount ).FindTag( METATAG::Tag() ))
+		if(auto metatag = SchemaMetadataIterator( ci->m_pMetadata, ci->m_nNumMetadata ).FindTag( METATAG::Tag() ))
 		{
 			if(auto meta_binding = METATAG::From( metatag ))
 			{
@@ -679,7 +679,7 @@ inline void SchemaReader::ReadPulseDomains( KeyValues3 *root, std::map<std::stri
 					{
 						auto scope = cpp_scopes->GetArrayElement( k );
 						
-						if(std::strcmp( scope->GetMemberString( "name" ), ci->m_pszName ) == 0)
+						if(std::strcmp( scope->GetMemberString( "name" ), ci->m_pName ) == 0)
 						{
 							functions = scope->FindOrCreateMember( "functions" );
 							break;
@@ -689,7 +689,7 @@ inline void SchemaReader::ReadPulseDomains( KeyValues3 *root, std::map<std::stri
 					if(!functions)
 					{
 						auto scope = cpp_scopes->ArrayAddElementToTail();
-						scope->SetMemberString( "name", ci->m_pszName );
+						scope->SetMemberString( "name", ci->m_pName );
 						functions = scope->FindOrCreateMember( "functions" );
 						functions->SetToEmptyArray();
 					}
@@ -774,7 +774,7 @@ void SchemaReader::ReadPulseDomainsInfo( KeyValues3 *root, std::map<std::string,
 	{
 		auto ci = classes[i];
 
-		if(auto metatag = SchemaMetadataIterator( ci->m_pStaticMetadata, ci->m_nStaticMetadataCount ).FindTag( MPulseInstanceDomainInfo::Tag() ))
+		if(auto metatag = SchemaMetadataIterator( ci->m_pMetadata, ci->m_nNumMetadata ).FindTag( MPulseInstanceDomainInfo::Tag() ))
 		{
 			if(auto meta_binding = MPulseInstanceDomainInfo::From( metatag ))
 			{
@@ -871,7 +871,7 @@ CSchemaType_DeclaredClass *SchemaReader::FindSchemaTypeInTypeScopes( const char 
 	auto ci = SchemaSystem()->FindClassByScopedName( name ).Get();
 
 	if(ci)
-		return ci->m_pDeclaredClass;
+		return ci->m_pTypeOf;
 	
 	for(int i = 0; i < SchemaSystem()->m_TypeScopes.GetNumStrings(); i++)
 	{
@@ -879,7 +879,7 @@ CSchemaType_DeclaredClass *SchemaReader::FindSchemaTypeInTypeScopes( const char 
 		ci = ts->FindDeclaredClass( name ).Get();
 		
 		if(ci)
-			return ci->m_pDeclaredClass;
+			return ci->m_pTypeOf;
 	}
 
 	return nullptr;
@@ -892,10 +892,10 @@ bool SchemaReader::ApplyNetVarOverrides( CSchemaType_DeclaredClass *type )
 	
 	auto ci = type->m_pClassInfo;
 
-	if(!ci || ci->m_nBaseClassCount <= 0)
+	if(!ci || ci->m_nNumBaseClasses <= 0)
 		return true;
 
-	for(auto &meta : SchemaMetadataIterator( ci->m_pStaticMetadata, ci->m_nStaticMetadataCount ))
+	for(auto &meta : SchemaMetadataIterator( ci->m_pMetadata, ci->m_nNumMetadata ))
 	{
 		if(auto var_override = MNetworkVarTypeOverride::From( &meta ))
 		{
@@ -905,7 +905,7 @@ bool SchemaReader::ApplyNetVarOverrides( CSchemaType_DeclaredClass *type )
 			{
 				if(IsVerboseLogging())
 				{
-					META_CONPRINTF( "Failed to find type override (%s) for class (%s)\n", var_override->Value().m_TypeName, ci->m_pszName );
+					META_CONPRINTF( "Failed to find type override (%s) for class (%s)\n", var_override->Value().m_TypeName, ci->m_pName );
 				}
 
 				continue;
@@ -917,7 +917,7 @@ bool SchemaReader::ApplyNetVarOverrides( CSchemaType_DeclaredClass *type )
 			{
 				if(IsVerboseLogging())
 				{
-					META_CONPRINTF( "Failed to find type override (%s) for class (%s) not initialized\n", var_override->Value().m_TypeName, ci->m_pszName );
+					META_CONPRINTF( "Failed to find type override (%s) for class (%s) not initialized\n", var_override->Value().m_TypeName, ci->m_pName );
 				}
 
 				continue;
@@ -937,11 +937,11 @@ bool SchemaReader::ApplyNetVarOverrides( CSchemaType_DeclaredClass *root, const 
 	if(!ci)
 		return true;
 
-	for(int i = 0; i < ci->m_nFieldCount; i++)
+	for(int i = 0; i < ci->m_nNumFields; i++)
 	{
 		auto &field = ci->m_pFields[i];
 
-		if(std::strcmp( field.m_pszName, field_to_overwrite ) == 0)
+		if(std::strcmp( field.m_pName, field_to_overwrite ) == 0)
 		{
 			auto def = FindDefEntry( root );
 
@@ -949,7 +949,7 @@ bool SchemaReader::ApplyNetVarOverrides( CSchemaType_DeclaredClass *root, const 
 			{
 				if(IsVerboseLogging())
 				{
-					META_CONPRINTF( "Failed to apply netvar override (%s) due to type (%s) being not yet initialized.\n", field_to_overwrite, ci->m_pszName );
+					META_CONPRINTF( "Failed to apply netvar override (%s) due to type (%s) being not yet initialized.\n", field_to_overwrite, ci->m_pName );
 				}
 
 				return true;
@@ -1001,11 +1001,11 @@ bool SchemaReader::ApplyNetVarOverrides( CSchemaType_DeclaredClass *root, const 
 		}
 	}
 
-	for(int i = 0; i < ci->m_nBaseClassCount; i++)
+	for(int i = 0; i < ci->m_nNumBaseClasses; i++)
 	{
 		auto &baseclass = ci->m_pBaseClasses[i];
 
-		if(ApplyNetVarOverrides( baseclass.m_pClass->m_pDeclaredClass, field_to_overwrite, type_override_idx ))
+		if(ApplyNetVarOverrides( baseclass.m_pClass->m_pTypeOf, field_to_overwrite, type_override_idx ))
 			return true;
 	}
 

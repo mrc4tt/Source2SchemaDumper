@@ -21,7 +21,7 @@ struct SchemaMetadataIterator
 	{
 		for(auto &metadata : *this)
 		{
-			if(std::strcmp( metadata.m_pszName, metatag ) == 0)
+			if(std::strcmp( metadata.m_pName, metatag ) == 0)
 			{
 				return &metadata;
 			}
@@ -114,7 +114,7 @@ struct SchemaMetadataField : public SchemaMetadataEntryData_t
 {
 	T *operator->() { return reinterpret_cast<T *>(m_pData); }
 	const T &Value() const { return *reinterpret_cast<T *>(m_pData); }
-	const char *Name() const { return m_pszName; }
+	const char *Name() const { return m_pName; }
 	std::string ToString() const { return ""; };
 };
 
@@ -127,7 +127,7 @@ template<> inline std::string SchemaMetadataField<empty_t>::ToString() const
 {
 	if(m_pData != nullptr && SchemaReader::IsVerboseLogging())
 	{
-		META_CONPRINTF( "Non nullptr data field found for metadata tag \"%s\"\n", m_pszName );
+		META_CONPRINTF( "Non nullptr data field found for metadata tag \"%s\"\n", m_pName );
 	}
 
 	return "";
@@ -196,12 +196,12 @@ public:
 
 	static std::string Eval( SchemaMetadataEntryData_t *meta )
 	{
-		auto iter = MetadataMap().find( meta->m_pszName );
+		auto iter = MetadataMap().find( meta->m_pName );
 		if(iter == MetadataMap().end())
 		{
 			if(SchemaReader::IsVerboseLogging())
 			{
-				META_CONPRINTF( "Unknown metadata tag found \"%s\", can't stringify!\n", meta->m_pszName );
+				META_CONPRINTF( "Unknown metadata tag found \"%s\", can't stringify!\n", meta->m_pName );
 			}
 
 			return "!!UNKNOWN!!";
@@ -226,7 +226,7 @@ private:
 
 #define METADATA_TAG( name, type ) struct name : public SchemaMetadataField<type> {\
 	static name *From( SchemaMetadataEntryData_t *other )\
-	{ return std::strcmp( other->m_pszName, #name ) == 0 ? reinterpret_cast<name *>(other) : nullptr; }\
+	{ return std::strcmp( other->m_pName, #name ) == 0 ? reinterpret_cast<name *>(other) : nullptr; }\
 	static const char *Tag() { return s_ThisClassName; }\
 	static inline const char *s_ThisClassName = #name;\
 };\

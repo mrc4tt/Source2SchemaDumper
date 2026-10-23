@@ -205,7 +205,7 @@ inline std::pair<KeyValues3 *, int> SchemaReader::CreateDefEntry( T *type )
 	def->SetMemberString( "scope", type->m_pTypeScope->GetScopeName() );
 
 	if(auto decl_class = type->template ReinterpretAs<CSchemaType_DeclaredClass>())
-		def->SetMemberString( "project", decl_class->m_pClassInfo ? decl_class->m_pClassInfo->m_pszProjectName : "!!NULL!!" );
+		def->SetMemberString( "project", decl_class->m_pClassInfo ? decl_class->m_pClassInfo->m_pProjectName : "!!NULL!!" );
 
 	int size;
 	uint8 alignment;
