@@ -28,12 +28,12 @@ jobs:
           - os: windows-latest
             os_short: windows
             compiler_cc: msvc-vs2022
-            sdks: '["cs2", "dota", "deadlock"]'
+            sdks: '["cs2"]'
           - os: ubuntu-latest
             os_short: linux
             compiler_cc: gcc-14
             compiler_cxx: g++-14
-            sdks: '["cs2", "dota"]'
+            sdks: '["cs2"]'
             container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -70,20 +70,6 @@ jobs:
           repository: mrc4tt/hl2sdk
           path: hl2sdk-cs2
           ref: cs2
-
-      - name: Checkout hl2sdk-dota
-        uses: actions/checkout@v4
-        with:
-          repository: alliedmodders/s2sdk
-          path: hl2sdk-dota
-          ref: dota
-
-      - name: Checkout hl2sdk-deadlock
-        uses: actions/checkout@v4
-        with:
-          repository: alliedmodders/s2sdk
-          path: hl2sdk-deadlock
-          ref: deadlock
 
       - name: Checkout AMBuild
         uses: actions/checkout@v4
@@ -140,7 +126,7 @@ jobs:
         run: |
           version=`echo $GITHUB_REF | sed "s/refs\/tags\///"`
           oses="linux windows"
-          sdks="cs2 dota deadlock"
+          sdks="cs2"
           for os in $oses; do
               for sdk in $sdks; do
                   if [ -d "./schemadump-$os/$sdk" ]; then
