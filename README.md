@@ -45,6 +45,23 @@ Example usage:
  * ``dump_schema metatags pulse_bindings``: Would dump pulse_bindings and general schema information with metatags.
  * ``dump_schema all for_cpp``: Would provide best result for later cpp generation as well as dumps everything it can.
 
+## Headless dumping (Linux)
+
+The Linux build also produces `schemadump_headless`, which dumps the schema straight from the CS2 server binaries without running a server: it loads `libschemasystem.so`, lets every module install its schema bindings and runs the same reader as `dump_schema`.
+
+The binaries can come from a server install or from the depots, for example with [DepotDownloader](https://github.com/SteamRE/DepotDownloader):
+
+```sh
+printf 'regex:game/bin/linuxsteamrt64/.*\\.so.*\nregex:game/csgo/bin/linuxsteamrt64/libserver\\.so\n' > bins.txt
+printf 'game/csgo/steam.inf\n' > inf.txt
+DepotDownloader -app 730 -depot 2347773 -os linux -filelist bins.txt -dir cs2
+DepotDownloader -app 730 -depot 2347770 -os linux -filelist inf.txt -dir cs2
+
+LD_LIBRARY_PATH=cs2/game/bin/linuxsteamrt64 ./schemadump_headless cs2 dumps all
+```
+
+Run it inside the Steam Runtime 3 (sniper) container or on a distribution at least as new. Arguments after the output directory are the same dump flags as `dump_schema` (default `all`). A few `MGetKV3ClassDefaults` getters need game systems that aren't running and are left empty, and module metadata is Windows only, as with the plugin.
+
 ## Generator scripts
 
 This plugin comes with a set of particular python generator scripts located in the root of a plugin folder (``addons/schemadump/``) that accept **JSON** schema dumps:

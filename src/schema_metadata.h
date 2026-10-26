@@ -1,6 +1,6 @@
 #pragma once
 
-#include "plugin.h"
+#include "host.h"
 #include "schemareader.h"
 #include "schemalib/schemametadata_data.h"
 
@@ -162,22 +162,37 @@ template<> inline std::string SchemaMetadataField<CSchemaNetworkOverride>::ToStr
 template<> inline std::string SchemaMetadataField<FnGetKV3Defaults>::ToString() const
 {
 #if SOURCE_ENGINE == SE_CS2
-	if(!Value() || !Value()())
-		return "";
+	auto stringify = [this]() -> std::string {
+		if(!Value() || !Value()())
+			return "";
 
-	KeyValues3 *kv = Value()()->m_Defaults;
-	if(!kv)
-		return "";
+		KeyValues3 *kv = Value()()->m_Defaults;
+		if(!kv)
+			return "";
 
-	CUtlString err, buf;
-	std::ostringstream ss;
-	if(!SaveKV3Text_NoHeader( kv, &err, &buf ))
+		CUtlString err, buf;
+		std::ostringstream ss;
+		if(!SaveKV3Text_NoHeader( kv, &err, &buf ))
+		{
+			ss << "!!FAILED TO PARSE (" << err.Get() << ")!!";
+			return ss.str();
+		}
+
+		return buf.Get();
+	};
+
+#ifdef SCHEMADUMP_HEADLESS
+	auto result = RunIsolated( stringify );
+	if(!result)
 	{
-		ss << "!!FAILED TO PARSE (" << err.Get() << ")!!";
-		return ss.str();
+		META_CONPRINTF( "KV3 defaults getter failed, leaving it empty\n" );
+		return "";
 	}
 
-	return buf.Get();
+	return *result;
+#else
+	return stringify();
+#endif
 #else
 	return "!!NOT SUPPORTED!!";
 #endif

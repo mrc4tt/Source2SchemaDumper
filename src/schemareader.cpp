@@ -4,7 +4,7 @@
 
 #include "splitstring.h"
 
-#include "plugin.h"
+#include "host.h"
 
 #include <fstream>
 #include <filesystem>
@@ -820,6 +820,7 @@ void SchemaReader::ReadModuleMetadata()
 		return;
 
 #ifndef PLATFORM_WINDOWS
+	// Linux builds only export a stub ExtractModuleMetadata ("Inert VModuleMetadata").
 	META_CONPRINTF( "Reading module metadata is only supported on windows, skipping...\n" );
 #else
 	META_CONPRINTF( "Reading module metadata...\n" );

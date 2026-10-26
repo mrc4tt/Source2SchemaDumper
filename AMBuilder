@@ -3,6 +3,9 @@ import os
 
 project = builder.LibraryProject(MMSPlugin.metadata["name"])
 
+# Headless dumper (src/headless.cpp): dumps the schema from the server binaries without a game server.
+headless = builder.ProgramProject(MMSPlugin.metadata["name"] + '_headless')
+
 for sdk_target in MMSPlugin.sdk_targets:
   sdk = sdk_target.sdk
   cxx = sdk_target.cxx
@@ -19,4 +22,16 @@ for sdk_target in MMSPlugin.sdk_targets:
     os.path.join(sdk['path'], 'common', 'network_connection.proto'),
   ])]
 
+  if cxx.target.platform == 'linux':
+    program = MMSPlugin.HL2Program(builder, cxx, headless, sdk)
+    program.compiler.defines += ['SCHEMADUMP_HEADLESS']
+    program.compiler.linkflags += ['-ldl']
+
+    program.sources += [
+      'src/headless.cpp',
+      'src/schemareader.cpp',
+      os.path.join(sdk['path'], 'tier0_perproject', 'keyvalues3.cpp' )
+    ]
+
 MMSPlugin.tasks += builder.Add(project)
+builder.Add(headless)

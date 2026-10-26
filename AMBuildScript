@@ -435,6 +435,13 @@ const char *PLUGIN_REVISION_COUNT = \"{revision_count}\";
 
   def HL2Library(self, context, compiler, project, sdk):
     binary = project.Configure(compiler, '{0}.{1}'.format(project.name, sdk['extension']), '{0} {1}'.format(sdk['name'], compiler.target.arch))
+    return self.HL2Config(context, binary, sdk)
+
+  def HL2Program(self, context, compiler, project, sdk):
+    binary = project.Configure(compiler, project.name, '{0} {1}'.format(sdk['name'], compiler.target.arch))
+    return self.HL2Config(context, binary, sdk)
+
+  def HL2Config(self, context, binary, sdk):
     cxx = binary.compiler
     
     self.addVersioning(cxx)
