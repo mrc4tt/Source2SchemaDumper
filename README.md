@@ -2,6 +2,24 @@
 
 This [metamod-source](https://www.metamodsource.net/downloads.php?branch=dev) plugin provides capabilities to dump Source2 schema definitions from CS2, Deadlock and Dota2 in a json/kv3 format for later processing in various ways.
 
+## Installation
+
+1. Install [Metamod:Source](https://www.metamodsource.net/downloads.php?branch=dev) 2.0
+2. Download the package for your server from the [latest release](https://github.com/mrc4tt/Source2SchemaDumper/releases/latest) (see [Which download?](#which-download) below)
+3. Extract the archive into your server's `game/csgo` directory (it contains `addons/`)
+
+### Which download?
+
+Every [release](https://github.com/mrc4tt/Source2SchemaDumper/releases/latest) has three packages:
+
+| Package | For |
+| --- | --- |
+| `Source2SchemaDumper-<version>-steamrt3.tar.gz` | Linux servers. The CS2 dedicated server runs in Steam Runtime 3 ("sniper"); this build loads there, in Steam Runtime 4 and on any newer distribution. **Take this one if unsure.** |
+| `Source2SchemaDumper-<version>-steamrt4.tar.gz` | Linux servers that run in Steam Runtime 4. |
+| `Source2SchemaDumper-<version>-windows.zip` | Windows servers. |
+
+The top of each release lists the exact glibc and libstdc++ every Linux build needs and the distributions it loads on. A build that is too new for the server fails at load time with `version 'GLIBC_2.xx' not found` in the console.
+
 ## Usage
 
 To perform schema dump run ``dump_schema`` command when server has started and initialized (calling this too early on startup might be unavailable). By default running this command without any extra args would dump base level schema definitions.
